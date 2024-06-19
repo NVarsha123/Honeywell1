@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Input Form</title>
+</head>
+<body>
+    <h2>Data Input Form</h2>
+    <form id="dataForm">
+        <label for="serialNumber">Device Serial Number:</label><br>
+        <input type="text" id="serialNumber" name="serialNumber" required><br><br>
+
+        <label for="portNumber">Port Number:</label><br>
+        <input type="number" id="portNumber" name="portNumber" required><br><br>
+
+        <label for="type">Type:</label><br>
+        <select id="type" name="type" required>
+            <option value="option1">Option 1</option>
+            <option value="option2">Option 2</option>
+            <option value="option3">Option 3</option>
+        </select><br><br>
+
+        <button type="button" onclick="submitForm()">Submit</button>
+        <button type="button" onclick="downloadSignature()">Download Signature</button>
+    </form>
+
+    <script>
+        function submitForm() {
+            const formData = {
+                serialNumber: document.getElementById('serialNumber').value,
+                portNumber: document.getElementById('portNumber').value,
+                type: document.getElementById('type').value
+            };
+
+            // Convert form data to JSON
+            const jsonData = JSON.stringify(formData);
+
+            // Store JSON data in a global variable or send it to backend
+            window.jsonData = jsonData;
+            console.log('JSON Data:', jsonData);
+        }
+
+        function downloadSignature() {
+            // Check if jsonData is defined
+            if (!window.jsonData) {
+                alert('Please submit the form first.');
+                return;
+            }
+
+            // Send JSON data to backend to calculate signature
+            fetch('/generateSignature', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: window.jsonData
+            })
+            .then(response => response.text())
+            .then(base64Signature => {
+                console.log('Base64 Signature:', base64Signature);
+
+                // Create a temporary anchor element for downloading the signature
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                document.body.appendChild(a);
+
+                // Create a Blob from the base64 signature string
+                const blob = new Blob([base64Signature], { type: 'text/plain' });
+
+                // Create object URL for the Blob and set it as the anchor's href
+                const url = window.URL.createObjectURL(blob);
+                a.href = url;
+
+                // Set the filename for the download
+                a.download = 'signature.txt';
+
+                // Trigger a click event to simulate download
+                a.click();
+
+                // Clean up: remove the temporary anchor and revoke the object URL
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('Error generating or downloading signature:', error);
+                alert('Error generating or downloading signature. Please try again.');
+            });
+        }
+    </script>
+</body>
+</html>
+
+
